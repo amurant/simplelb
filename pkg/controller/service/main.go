@@ -76,8 +76,8 @@ type ServiceReconciler struct {
 // newServiceReconciler returns a new reconcile.Reconciler
 func newServiceReconciler(mgr manager.Manager, portforwardImage *string) reconcile.Reconciler {
 	return &ServiceReconciler{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
+		client:           mgr.GetClient(),
+		scheme:           mgr.GetScheme(),
 		portforwardImage: portforwardImage,
 	}
 }
