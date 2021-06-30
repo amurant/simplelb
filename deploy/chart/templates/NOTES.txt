@@ -1,0 +1,12 @@
+Thank you for installing Simple LB {{ .Chart.AppVersion }}.
+
+To continue, label the nodes you want to be used:
+
+  $ kubectl label node <node name> simplelb.amurant.io/enablelb=true
+
+Now, an example deployment can be installed as follows:
+
+  $ kubectl create deployment hello-node --image=k8s.gcr.io/echoserver:1.4
+  $ kubectl expose deployment hello-node --type=LoadBalancer --port=8080
+
+>><<

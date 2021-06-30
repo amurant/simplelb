@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simplelb
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: simplelb
+  template:
+    metadata:
+      labels:
+        name: simplelb
+    spec:
+      serviceAccountName: simplelb
+      containers:
+        - name: simplelb
+          image: {{ .Values.imageSimplelb }}
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: 20M
+              cpu: 100m
+            limits:
+              memory: 100M
+              cpu: 200m
+          args:
+          - --portforward-image={{ .Values.imageSimplelbPortforward }}

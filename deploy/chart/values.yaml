@@ -1,0 +1,3 @@
+
+imageSimplelb: ghcr.io/amurant/simplelb:master
+imageSimplelbPortforward: ghcr.io/amurant/simplelb-portforward:master
