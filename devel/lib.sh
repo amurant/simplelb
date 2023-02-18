@@ -26,19 +26,19 @@ check_tool() {
 }
 
 install_tool_kind() {
-  curl -Lo "${TOOLS_PATH}/kind" "https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64"
+  curl -Lo "${TOOLS_PATH}/kind" "https://github.com/kubernetes-sigs/kind/releases/download/v0.17.0/kind-linux-amd64"
   chmod +x "${TOOLS_PATH}/kind"
 }
 
 install_tool_kubectl() {
-  curl -Lo "${TOOLS_PATH}/kubectl" "https://dl.k8s.io/release/v1.21.0/bin/linux/amd64/kubectl"
+  curl -Lo "${TOOLS_PATH}/kubectl" "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
   chmod +x "${TOOLS_PATH}/kubectl"
 }
 
 install_tool_helm() {
   pushd "${TOOLS_PATH}"
 
-  curl -Lo helm.tar.gz "https://get.helm.sh/helm-v3.6.2-linux-amd64.tar.gz"
+  curl -Lo helm.tar.gz "https://get.helm.sh/helm-v3.11.1-linux-amd64.tar.gz"
 
   tar -zxvf helm.tar.gz
 

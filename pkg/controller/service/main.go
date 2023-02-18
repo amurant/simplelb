@@ -93,7 +93,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request reconcile.Req
 
 	// Fetch the Service instance
 	svc := &corev1.Service{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, svc)
+	err := r.client.Get(ctx, request.NamespacedName, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -105,7 +105,9 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request reconcile.Req
 		return reconcile.Result{}, err
 	}
 
-	if svc.Spec.Type != corev1.ServiceTypeLoadBalancer || svc.Spec.ClusterIP == "" || svc.Spec.ClusterIP == "None" {
+	if svc.Spec.Type != corev1.ServiceTypeLoadBalancer ||
+		svc.Spec.ClusterIP == "" ||
+		svc.Spec.ClusterIP == "None" {
 		// WE're only interested in LoadBalancer type services
 		// Return and don't requeue
 		reqLogger.Info("Not a LoadBalancer type of service, ignoring")
@@ -120,13 +122,13 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request reconcile.Req
 		return reconcile.Result{}, err
 	}
 
-	// Check if this Pod already exists
+	// Check if this DaemonSet already exists
 	found := &appsv1.DaemonSet{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: ds.Name, Namespace: ds.Namespace}, found)
+	err = r.client.Get(ctx, types.NamespacedName{Name: ds.Name, Namespace: ds.Namespace}, found)
 	if err != nil && errors.IsNotFound(err) {
 		reqLogger.Info("Creating a new DS", "DS.Namespace", ds.Namespace, "DS.Name", ds.Name)
-		err = r.client.Create(context.TODO(), ds)
-		if err != nil {
+
+		if err := r.client.Create(ctx, ds); err != nil {
 			return reconcile.Result{}, err
 		}
 
@@ -139,10 +141,11 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request reconcile.Req
 	if found.Annotations[svcHashAnnotation] != serviceHash(svc) {
 		// Need to update the DS
 		reqLogger.Info("Updating DS", "DS.Namespace", ds.Namespace, "DS.Name", ds.Name)
-		err = r.client.Update(context.TODO(), ds)
-		if err != nil {
+
+		if err := r.client.Update(ctx, ds); err != nil {
 			return reconcile.Result{}, err
 		}
+
 		// DaemonSet updated successfully - don't requeue
 		// Changes in the DS will trigger proper requests for this as the DS rollout progresses
 		return reconcile.Result{}, nil
@@ -150,27 +153,28 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request reconcile.Req
 
 	// DS already exists - don't requeue but sync up the addresses for the service
 	// We also get the reconcile request on changes to the created DS, so for each of those try to sync the service addresses
-	err = r.syncServiceAddresses(svc)
-	if err != nil {
+
+	if err := r.syncServiceAddresses(ctx, svc); err != nil {
 		reqLogger.Error(err, "Failed to sync service addresses")
 		return reconcile.Result{}, err
 	}
+
 	return reconcile.Result{}, nil
 }
 
 // update Loadbalancer service status
-func (r *ServiceReconciler) syncServiceAddresses(svc *corev1.Service) error {
+func (r *ServiceReconciler) syncServiceAddresses(ctx context.Context, svc *corev1.Service) error {
 	sw := ServiceWrangler{
 		client:  r.client,
 		service: *svc,
 	}
 
-	pods, err := sw.FindPods()
+	pods, err := sw.FindPods(ctx)
 	if err != nil {
 		return err
 	}
 
-	ips, err := r.podIPs(pods.Items)
+	ips, err := r.podIPs(ctx, pods.Items)
 	if err != nil {
 		return err
 	}
@@ -187,7 +191,7 @@ func (r *ServiceReconciler) syncServiceAddresses(svc *corev1.Service) error {
 
 	log.Info("Addresses need to be updated for service:", "IPs", ips)
 
-	return sw.UpdateAddresses(ips)
+	return sw.UpdateAddresses(ctx, ips)
 }
 
 // newDaemonSetForService returns a DaemonSet with the same name/namespace as the cr
@@ -303,7 +307,7 @@ func newDaemonSetForService(svc *corev1.Service, portforwardImage string) *appsv
 						daemonsetNodeLabel: "true",
 					},
 					InitContainers: []corev1.Container{
-						corev1.Container{
+						{
 							Name:  "sysctl",
 							Image: portforwardImage,
 							Command: []string{

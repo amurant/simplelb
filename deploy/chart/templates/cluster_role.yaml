@@ -3,32 +3,22 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: simplelb
 rules:
-- apiGroups:
-  - ""
+- apiGroups: [ "" ]
   resources:
-  - pods
   - services
-  - replicasets
+  - pods
   - nodes
   verbs:
   - list
   - get
   - watch
-- apiGroups:
-  - ""
+- apiGroups: [ "" ]
   resources:
   - services/status
   verbs:
   - update
-- apiGroups:
-  - apps
+- apiGroups: [ "apps" ]
   resources:
   - daemonsets
-  verbs:
-  - "*"
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
   verbs:
   - "*"

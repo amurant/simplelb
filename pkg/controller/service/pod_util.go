@@ -8,15 +8,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func (r *ServiceReconciler) getNode(name string) (*corev1.Node, error) {
+func (r *ServiceReconciler) getNode(ctx context.Context, name string) (*corev1.Node, error) {
 	node := &corev1.Node{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: name, Namespace: ""}, node); err != nil {
+	if err := r.client.Get(ctx, types.NamespacedName{Name: name, Namespace: ""}, node); err != nil {
 		return nil, err
 	}
 	return node, nil
 }
 
-func (r *ServiceReconciler) podIPs(pods []corev1.Pod) ([]string, error) {
+func (r *ServiceReconciler) podIPs(ctx context.Context, pods []corev1.Pod) ([]string, error) {
 	ips := map[string]bool{}
 
 	for _, pod := range pods {
@@ -27,7 +27,7 @@ func (r *ServiceReconciler) podIPs(pods []corev1.Pod) ([]string, error) {
 			continue
 		}
 
-		node, err := r.getNode(pod.Spec.NodeName)
+		node, err := r.getNode(ctx, pod.Spec.NodeName)
 		if errors.IsNotFound(err) {
 			continue
 		} else if err != nil {

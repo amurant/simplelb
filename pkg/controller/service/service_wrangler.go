@@ -24,19 +24,19 @@ func (sw *ServiceWrangler) ExistingIPs() []string {
 	return ips
 }
 
-func (sw *ServiceWrangler) FindPods() (*corev1.PodList, error) {
+func (sw *ServiceWrangler) FindPods(ctx context.Context) (*corev1.PodList, error) {
 	opts := []client.ListOption{
 		client.InNamespace(sw.service.Namespace),
 		client.MatchingLabels{svcNameLabel: sw.service.Name},
 	}
 
 	pods := &corev1.PodList{}
-	err := sw.client.List(context.TODO(), pods, opts...)
+	err := sw.client.List(ctx, pods, opts...)
 
 	return pods, err
 }
 
-func (sw *ServiceWrangler) UpdateAddresses(ips []string) error {
+func (sw *ServiceWrangler) UpdateAddresses(ctx context.Context, ips []string) error {
 	svc := sw.service.DeepCopy()
 	svc.Status.LoadBalancer.Ingress = nil
 	for _, ip := range ips {
@@ -45,5 +45,5 @@ func (sw *ServiceWrangler) UpdateAddresses(ips []string) error {
 		})
 	}
 
-	return sw.client.Status().Update(context.TODO(), svc)
+	return sw.client.Status().Update(ctx, svc)
 }

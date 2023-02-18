@@ -163,11 +163,8 @@ jobs:
       
       - name: Publish helm chart
         run: |
-          export HELM_EXPERIMENTAL_OCI=1
-
           echo "$TOKEN" | ./hack/helm.sh registry login -u $USER --password-stdin $REGISTRY
-          ./hack/helm.sh chart save ./deploy/chart/ ${{ steps.info.outputs.IMAGE_HELM }}
-          ./hack/helm.sh chart push ${{ steps.info.outputs.IMAGE_HELM }}
+          ./hack/helm.sh push ${{ steps.generate.outputs.HELM_RELEASE }} "oci://${{ env.REGISTRY }}/${{ env.SIMPLELB_HELM_IMAGE_NAME }}"
         env:
           USER: ${{ github.actor }}
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
