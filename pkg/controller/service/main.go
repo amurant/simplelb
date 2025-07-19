@@ -43,16 +43,26 @@ func AddToManager(mgr manager.Manager, portforwardImage *string) error {
 	}
 
 	// Watch for changes to primary resource Service
-	err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(source.Kind(
+		mgr.GetCache(),
+		&corev1.Service{},
+		&handler.TypedEnqueueRequestForObject[*corev1.Service]{},
+	))
 	if err != nil {
 		return err
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner Service
-	err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &corev1.Service{},
-	})
+	err = c.Watch(source.Kind(
+		mgr.GetCache(),
+		&appsv1.DaemonSet{},
+		handler.TypedEnqueueRequestForOwner[*appsv1.DaemonSet](
+			mgr.GetScheme(),
+			mgr.GetRESTMapper(),
+			&corev1.Service{},
+			handler.OnlyControllerOwner(),
+		),
+	))
 	if err != nil {
 		return err
 	}
